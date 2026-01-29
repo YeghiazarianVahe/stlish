@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/Vahe Yeghiazaryan/Documents/dev/Portfolio/stlish/build/tests/stlish_smoke_test[1]_tests.cmake")
+  include("C:/Users/Vahe Yeghiazaryan/Documents/dev/Portfolio/stlish/build/tests/stlish_smoke_test[1]_tests.cmake")
+else()
+  add_test(stlish_smoke_test_NOT_BUILT stlish_smoke_test_NOT_BUILT)
+endif()

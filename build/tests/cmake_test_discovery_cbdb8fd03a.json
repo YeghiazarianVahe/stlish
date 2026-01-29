@@ -1,0 +1,17 @@
+{
+  "tests": 1,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "Smoke",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "Basic",
+          "file": "C:\/Users\/Vahe Yeghiazaryan\/Documents\/dev\/Portfolio\/stlish\/tests\/test_smoke.cpp",
+          "line": 3
+        }
+      ]
+    }
+  ]
+}
