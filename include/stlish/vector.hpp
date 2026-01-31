@@ -1,4 +1,8 @@
+#include <utility>
+#include <cstddef>
+#include <initializer_list>
 #include <new>
+#include <type_traits>
 
 namespace stlish {
 
@@ -21,8 +25,10 @@ namespace stlish {
         // Constructors
         vector() noexcept; // default constructor
         explicit vector(size_type); // size constructor
-        vector(size_type , const reference); // fill constructor
-        template<class InputIt> vector(InputIt, InputIt); // Range constructor
+        vector(size_type , const_reference); // fill constructor
+        template<class InputIt>
+        requires (!std::is_integral_v<InputIt>)
+        vector(InputIt, InputIt); // Range constructor
         vector(std::initializer_list<value_type> init); //Initializer list constructor
         vector(const vector&); // copy constructor
         vector(vector&&) noexcept; // move constructor
@@ -36,9 +42,9 @@ namespace stlish {
         void swap(vector&) noexcept;
 
     private:
-        size_type size_ = 0;
-        size_type capacity_ = 0;
-        pointer data_ = nullptr;
+        size_type size_;
+        size_type capacity_;
+        pointer data_;
 
     private: 
     // helper skeleton
@@ -107,25 +113,153 @@ namespace stlish {
 
     template <class T>
     void stlish::vector<T>::destroy_range(pointer first, pointer last) noexcept {
-        while (last != true) {
+        while (last != first) {
             --last;
             last->~value_type();
         }
     }
 
     template <class T>
-    stlish::vector<T>::vector() noexcept : 
-        data_{nullptr}, size_{0}, capacity_{0} {};
+    vector<T>::vector() noexcept : 
+        size_{0}, capacity_{0}, data_{nullptr} {}
 
     template <class T>
-    stlish::vector<T>::~vector() {
-        if (data_ != nullptr) destroy_range(data_, data_ + size);
+    vector<T>::~vector() {
+        destroy_range(data_, data_ + size_);
         deallocate_raw(data_, capacity_);
+
+        data_ = nullptr;
+        size_ = 0;
+        capacity_ = 0;
     }
 
     template <class T>
-    void stlish::vector<T>::clear() noexcept {
+    void vector<T>::clear() noexcept {
         destroy_range(data_, data_ + size_);
         size_ = 0;
     }
+
+    template <class T>
+    vector<T>::vector(size_type n) : 
+        size_{0}, capacity_{0}, data_{nullptr} {
+        if (n == 0) return;
+
+        pointer p = allocate_raw(n);
+        size_type i = 0;
+
+        try {
+            for (; i < n; ++i){
+                ::new (static_cast<void*>(p+i)) value_type();
+            }
+        } catch (...) {
+            destroy_range(p, p + i);
+            deallocate_raw(p, n);
+            throw;
+        }
+
+        data_ = p;
+        size_ = n;
+        capacity_ = n;
+    }
+
+    template <class T>
+    stlish::vector<T>::vector(size_type n, const_reference value) :
+        size_{0}, capacity_{0}, data_{nullptr} {
+            if (n == 0) return;
+
+            pointer p = allocate_raw(n);
+            size_type i = 0;
+
+            try {
+                for(; i < n; ++i) {
+                    ::new (static_cast<void*>(p + i)) value_type(value);
+                }
+            } catch (...) {
+                destroy_range(p, p + i);
+                deallocate_raw(p, n);
+                throw;
+            }
+
+            data_ = p;
+            size_ = n;
+            capacity_ = n;
+        }
+
+    template <class T> 
+    vector<T>::vector(const vector& other) :
+        size_{0}, capacity_{0}, data_{nullptr} {
+            if (other.size_ == 0) return;
+
+            const size_type n = other.size_;
+            pointer p = allocate_raw(n);
+            size_type i = 0;
+            
+            try {
+                for (; i < n; ++i){
+                    ::new (static_cast<void*>(p + i)) value_type(other.data_[i]);
+                }
+            }
+            catch(...) {
+                destroy_range(p, p + i);
+                deallocate_raw(p, n);
+                throw;
+            }
+
+            data_ = p;
+            size_ = n;
+            capacity_ = n;
+            
+        }
+
+    template <class T>
+    vector<T>::vector(vector&& other) noexcept :
+        size_{other.size_}, capacity_{other.capacity_}, data_{other.data_} {
+            other.size_ = 0;
+            other.capacity_ = 0;
+            other.data_ = nullptr;
+        }
+
+    template <class T>
+    typename stlish::vector<T>::size_type
+    stlish::vector<T>::size() const noexcept { return size_; }
+
+    template <class T>
+    typename stlish::vector<T>::size_type
+    stlish::vector<T>::capacity() const noexcept { return capacity_; }
+
+    template <class T>
+    bool stlish::vector<T>::empty() const noexcept { return size_ == 0; }
+
+    template <class T>
+    typename stlish::vector<T>::pointer
+    stlish::vector<T>::data() noexcept { return data_; }
+
+    template <class T>
+    typename stlish::vector<T>::const_pointer
+    stlish::vector<T>::data() const noexcept { return data_; }
+
+    template <class T>
+    typename stlish::vector<T>::iterator
+    stlish::vector<T>::begin() noexcept { return data_; }
+
+    template <class T>
+    typename stlish::vector<T>::const_iterator
+    stlish::vector<T>::begin() const noexcept { return data_; }
+
+    template <class T>
+    typename stlish::vector<T>::const_iterator
+    stlish::vector<T>::cbegin() const noexcept { return data_; }
+
+    template <class T>
+    typename stlish::vector<T>::iterator
+    stlish::vector<T>::end() noexcept { return data_ + size_; }
+
+    template <class T>
+    typename stlish::vector<T>::const_iterator
+    stlish::vector<T>::end() const noexcept { return data_ + size_; }
+
+    template <class T>
+    typename stlish::vector<T>::const_iterator
+    stlish::vector<T>::cend() const noexcept { return data_ + size_; }
+
 } // namespace stlish
