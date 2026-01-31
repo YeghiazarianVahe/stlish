@@ -19,13 +19,20 @@ TEST(VectorLifetime, DestructorDestroysAllElements) {
     EXPECT_EQ(CountingType::alive, 0);
 }
 
-TEST(VectorModifiers, ClearDestroysButKeepsCapacityAndBuffer) {
+TEST(VectorLifetime, ClearDestroysElementsButKeepsBufferAndCapacity) {
     stlish::vector<int> v(5, 3);
     auto* ptr = v.data();
     auto cap = v.capacity();
 
     v.clear();
+
     EXPECT_EQ(v.size(), 0u);
     EXPECT_EQ(v.capacity(), cap);
-    EXPECT_EQ(v.data(), ptr); // capacity kept, so buffer should stay
+    EXPECT_EQ(v.data(), ptr);
+}
+
+TEST(VectorLifetime, PopBackOnEmptyIsSafeNoThrow) {
+    stlish::vector<int> v;
+    v.pop_back(); // your implementation does "if empty return;"
+    EXPECT_EQ(v.size(), 0u);
 }
