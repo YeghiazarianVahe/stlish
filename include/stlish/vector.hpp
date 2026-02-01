@@ -1,5 +1,4 @@
-#ifndef STLISH_VECTOR_HPP
-#define STLISH_VECTOR_HPP
+#pragma once
 
 #include <algorithm>
 #include <cstddef>
@@ -894,5 +893,3 @@ bool operator>=(const vector<T>& lhs, const vector<T>& rhs) {
 }
 
 } // namespace stlish
-
-#endif // STLISH_VECTOR_HPP

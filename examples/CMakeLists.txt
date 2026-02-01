@@ -1,11 +1,23 @@
-add_executable(demo_vector_basics demo_vector_basics.cpp)
+# ========================================
+# Helper function to create example executables
+# ========================================
+function(add_stlish_example example_name)
+  add_executable(${example_name} ${example_name}.cpp)
+  target_link_libraries(${example_name} PRIVATE stlish)
+  
+  # Set output directory
+  set_target_properties(${example_name} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+  )
+endfunction()
 
-target_link_libraries(demo_vector_basics PRIVATE stlish)
+# ========================================
+# Vector Examples
+# ========================================
+add_stlish_example(demo_vector_basics)
+add_stlish_example(demo_vector_perf)
 
-add_executable(demo_vector_perf demo_vector_perf.cpp)
-
-target_link_libraries(demo_vector_perf PRIVATE stlish)
-
-set_target_properties(demo_vector_basics demo_vector_perf PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
+# ========================================
+# Forward List Examples
+# ========================================
+add_stlish_example(forward_list_demo)
