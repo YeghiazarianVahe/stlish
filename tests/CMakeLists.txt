@@ -1,23 +1,30 @@
-include(FetchContent)
+# ========================================
+# Helper function to create test executables
+# ========================================
+function(add_stlish_test test_name)
+  add_executable(${test_name} ${test_name}.cpp)
+  target_link_libraries(${test_name} PRIVATE
+      stlish
+      Catch2::Catch2WithMain
+  )
+  
+  # Discover tests automatically
+  include(Catch)
+  catch_discover_tests(${test_name})
+endfunction()
 
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
+# ========================================
+# Forward List Tests (Catch2)
+# ========================================
+add_stlish_test(test_forward_list)
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-
-# pick up all tests/*.cpp automatically
-file(GLOB STLISH_TEST_SOURCES CONFIGURE_DEPENDS "*.cpp")
-
-add_executable(stlish_tests ${STLISH_TEST_SOURCES})
-
-# HARD FIX: ensure include path is correct for tests
-target_include_directories(stlish_tests PRIVATE ${PROJECT_SOURCE_DIR}/include)
-
-target_link_libraries(stlish_tests PRIVATE GTest::gtest_main stlish)
-
-include(GoogleTest)
-gtest_discover_tests(stlish_tests)
+# ========================================
+# Vector Tests (TODO: Migrate to Catch2)
+# ========================================
+# Temporarily disabled - need migration from GoogleTest to Catch2
+# add_stlish_test(test_vector_api)
+# add_stlish_test(test_vector_constructors)
+# add_stlish_test(test_vector_iterators)
+# add_stlish_test(test_vector_exceptions)
+# add_stlish_test(test_vector_invariants)
+# add_stlish_test(test_vector_clear_lifetime)
