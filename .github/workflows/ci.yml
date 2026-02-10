@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ubuntu with g++ and clang++
+          - os: ubuntu-latest
+            compiler: g++
+            cmake_generator: Ninja
+          - os: ubuntu-latest
+            compiler: clang++
+            cmake_generator: Ninja
+          
+          # macOS with clang++ only
+          - os: macos-latest
+            compiler: clang++
+            cmake_generator: Ninja
+          
+          # Windows with MinGW g++
+          - os: windows-latest
+            compiler: g++
+            cmake_generator: "MinGW Makefiles"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # ============================================================
+    # UBUNTU SETUP
+    # ============================================================
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build g++ clang
+
+    # ============================================================
+    # MACOS SETUP
+    # ============================================================
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install cmake ninja
+
+    # ============================================================
+    # WINDOWS SETUP (MinGW via MSYS2)
+    # ============================================================
+    - name: Setup MSYS2 (Windows)
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-ninja
+          make
+
+    # ============================================================
+    # CONFIGURE CMAKE (Platform-specific)
+    # ============================================================
+    - name: Configure CMake (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cmake -B build -G "${{ matrix.cmake_generator }}" \
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+          -DCMAKE_BUILD_TYPE=Release
+
+    - name: Configure CMake (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        cmake -B build -G "${{ matrix.cmake_generator }}" \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_BUILD_TYPE=Release
+
+    # ============================================================
+    # BUILD
+    # ============================================================
+    - name: Build (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: cmake --build build --config Release
+
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: cmake --build build --config Release
+
+    # ============================================================
+    # RUN TESTS
+    # ============================================================
+    - name: Run tests (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        ctest --output-on-failure --build-config Release
+
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        cd build
+        ctest --output-on-failure --build-config Release
