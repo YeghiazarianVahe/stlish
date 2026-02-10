@@ -1,0 +1,2 @@
+add_executable(array_demo array_demo.cpp)
+target_link_libraries(array_demo PRIVATE stlish)
